@@ -2,7 +2,7 @@ from datetime import date, timedelta
 import pytest
 
 # from model import ...
-from model import OrderLine, Batch, allocate_with_priority
+from model import OrderLine, Batch, allocate_with_priority, OutOfStock
 from datetime import datetime
 
 today = date.today()
@@ -87,3 +87,9 @@ def test_prefers_earlier_qty_available_batches():
     line = OrderLine("ref 123", "SHORT-LAMP", qty=2)
     allocated_batch_ref = allocate_with_priority(line, [later_batch, tomorrow_batch, today_batch])
     assert allocated_batch_ref == tomorrow_batch.reference
+
+def test_no_stock_raises_out_of_stock_exception():
+    with pytest.raises(OutOfStock) as e:        
+        batch, line = make_test_batch_and_line("SHORT-LAMP", 10, 12, "LARGE-LAMP")
+        allocate_with_priority(line, [batch])
+        assert str(e) == f"Out of stock for sku {line.sku}"
